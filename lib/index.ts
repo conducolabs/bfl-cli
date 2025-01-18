@@ -48,13 +48,17 @@ const setup = () => {
             let configuration = {};
 
             if (!options.model || !models.includes(options.model)) {
-                const input = await inquirer.prompt([{
-                    type: "list",
-                    name: "model",
-                    message: "Select an image generation model:",
-                    choices: models
-                }]);
-                model = input.model;
+                try {
+                    const input = await inquirer.prompt([{
+                        type: "list",
+                        name: "model",
+                        message: "Select an image generation model:",
+                        choices: models
+                    }]);
+                    model = input.model;
+                } catch(error) {
+                    return;
+                }
             } else {
                 model = options.model;
                 console.log(chalk.green("✓"), `Model is set to "${ options.model }".`);
@@ -62,21 +66,29 @@ const setup = () => {
 
             if (!options.mode) {
                 if (model === "flux-pro") {
-                    const input = await inquirer.prompt([{
-                        type: "list",
-                        name: "mode",
-                        message: "Select if a tool should be used for image generation:",
-                        choices: fluxPro1Modes
-                    }]);
-                    mode = input.mode;
+                    try {
+                        const input = await inquirer.prompt([{
+                            type: "list",
+                            name: "mode",
+                            message: "Select if a tool should be used for image generation:",
+                            choices: fluxPro1Modes
+                        }]);
+                        mode = input.mode;
+                    } catch(error) {
+                        return;
+                    }
                 } else if (model === "flux-pro 1.1") {
-                    const input = await inquirer.prompt([{
-                        type: "list",
-                        name: "mode",
-                        message: "Select if a tool should be used for image generation:",
-                        choices: fluxPro11Modes
-                    }]);
-                   mode = input.mode;
+                    try {
+                        const input = await inquirer.prompt([{
+                            type: "list",
+                            name: "mode",
+                            message: "Select if a tool should be used for image generation:",
+                            choices: fluxPro11Modes
+                        }]);
+                        mode = input.mode;
+                    } catch(error) {
+                        return;
+                    }
                 }
             } else {
                 if (model === "flux-pro" && fluxPro1Modes.includes(options.mode)) {

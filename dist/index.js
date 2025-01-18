@@ -86,13 +86,18 @@ const setup = () => {
         const useFinetune = options.finetuneId ? true : false;
         let configuration = {};
         if (!options.model || !models.includes(options.model)) {
-            const input = yield inquirer_1.default.prompt([{
-                    type: "list",
-                    name: "model",
-                    message: "Select an image generation model:",
-                    choices: models
-                }]);
-            model = input.model;
+            try {
+                const input = yield inquirer_1.default.prompt([{
+                        type: "list",
+                        name: "model",
+                        message: "Select an image generation model:",
+                        choices: models
+                    }]);
+                model = input.model;
+            }
+            catch (error) {
+                return;
+            }
         }
         else {
             model = options.model;
@@ -100,22 +105,32 @@ const setup = () => {
         }
         if (!options.mode) {
             if (model === "flux-pro") {
-                const input = yield inquirer_1.default.prompt([{
-                        type: "list",
-                        name: "mode",
-                        message: "Select if a tool should be used for image generation:",
-                        choices: fluxPro1Modes
-                    }]);
-                mode = input.mode;
+                try {
+                    const input = yield inquirer_1.default.prompt([{
+                            type: "list",
+                            name: "mode",
+                            message: "Select if a tool should be used for image generation:",
+                            choices: fluxPro1Modes
+                        }]);
+                    mode = input.mode;
+                }
+                catch (error) {
+                    return;
+                }
             }
             else if (model === "flux-pro 1.1") {
-                const input = yield inquirer_1.default.prompt([{
-                        type: "list",
-                        name: "mode",
-                        message: "Select if a tool should be used for image generation:",
-                        choices: fluxPro11Modes
-                    }]);
-                mode = input.mode;
+                try {
+                    const input = yield inquirer_1.default.prompt([{
+                            type: "list",
+                            name: "mode",
+                            message: "Select if a tool should be used for image generation:",
+                            choices: fluxPro11Modes
+                        }]);
+                    mode = input.mode;
+                }
+                catch (error) {
+                    return;
+                }
             }
         }
         else {
