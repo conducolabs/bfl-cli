@@ -450,11 +450,11 @@ const fetchImageDetails = async (bflApi: Connector, imageId: string, statusBar: 
 
 const downloadImage = async (id: string, url: string, location: string) => {
     console.log(chalk.green("✓"), "Image generation done. Downloading file...");
+    const statusBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+    statusBar.start(100, 0);
     const response = await axios.get(url, { 
         responseType: "arraybuffer",
         onDownloadProgress: (progressEvent: any) => {
-            const statusBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-            statusBar.start(100, 0);
             let percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             if (percentCompleted === 100) {
                 statusBar.update(100);

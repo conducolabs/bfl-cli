@@ -64,7 +64,6 @@ const initCommand = (program: Command) => {
                 console.log(chalk.green("✓"), "Training data compressed.");
                 console.log(chalk.green("✓"), "Uploading training data...");
                 const finetuneId = await uploadData(options.apiKey, options.name, trainingDataArchive, configuration);
-                console.log("\n");
                 console.log(chalk.green("✓"), "Training data uploaded. Finetuning model ID:", finetuneId);
                 let trainingSpinner = loadingAnimation(() => `Wating for training to complete. This can take some time depending on the number of iterations and amount of training data. You can wait for the training to finish or cancel the process with CTRL+C.`);
                 await checkTrainingStatus(options.apiKey, finetuneId, trainingSpinner);
@@ -122,8 +121,6 @@ const uploadData = async (apiKey: string, name: string, trainingData: string, co
             "Content-Type": "application/json"
         },
         onUploadProgress: (progressEvent: any) => {
-            const statusBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
-            statusBar.start(100, 0);
             let percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             if (percentCompleted === 100) {
                 statusBar.update(100);

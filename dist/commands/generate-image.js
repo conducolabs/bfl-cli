@@ -479,11 +479,11 @@ const fetchImageDetails = (bflApi, imageId, statusBar, downloadFunction, output)
 });
 const downloadImage = (id, url, location) => __awaiter(void 0, void 0, void 0, function* () {
     console.log(chalk_1.default.green("✓"), "Image generation done. Downloading file...");
+    const statusBar = new cli_progress_1.default.SingleBar({}, cli_progress_1.default.Presets.shades_classic);
+    statusBar.start(100, 0);
     const response = yield axios_1.default.get(url, {
         responseType: "arraybuffer",
         onDownloadProgress: (progressEvent) => {
-            const statusBar = new cli_progress_1.default.SingleBar({}, cli_progress_1.default.Presets.shades_classic);
-            statusBar.start(100, 0);
             let percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             if (percentCompleted === 100) {
                 statusBar.update(100);
