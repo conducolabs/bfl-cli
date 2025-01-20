@@ -105,7 +105,7 @@ const initCommand = (program) => {
             let compressionSpinner = loadingAnimation(() => `Compressing training data for upload...`);
             const trainingDataArchive = yield generateZipToBase64String(path_1.default.resolve(options.trainingData));
             clearInterval(compressionSpinner);
-            console.log(chalk_1.default.green("✓"), "Training data compressed.");
+            console.log("\n", chalk_1.default.green("✓"), "Training data compressed.");
             console.log(chalk_1.default.green("✓"), "Uploading training data...");
             const finetuneId = yield uploadData(options.apiKey, options.name, trainingDataArchive, configuration);
             console.log(chalk_1.default.green("✓"), "Training data uploaded. Finetuning model ID:", finetuneId);
