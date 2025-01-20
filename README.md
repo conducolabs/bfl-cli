@@ -27,5 +27,10 @@ npx @conducolabs/bfl-cli init-finetune --help
 npx @conducolabs/bfl-cli generate-finetune --help
 ```
 
+## Available models & tools
+
+
 ## Advanced
 The examples show a basic usage of the CLI. There are optional parameters, that can be passed to the functions. If you want to use your own configuration for image generation, please provide your configuration as a JSON file through the `--configurationFile` attribute. Allowed values vary from model to model. A full list of all available values can be found in the [API description](https://api.us1.bfl.ai/scalar) of Black Forest Labs.
+
+You can also use this CLI to generate images that uses a finetuning model. Add `--finetuneId` to your call and provide the ID of your finetuning model. As of now, finetuning is available for `flux-pro` and `flux-pro 1.1`.

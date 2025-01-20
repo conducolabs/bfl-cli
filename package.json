@@ -1,6 +1,6 @@
 {
   "name": "@conducolabs/bfl-cli",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A command line tool to interact with the Black Forest Labs API.",
   "main": "dist/index.js",
   "repository": "https://github.com/conducolabs/bfl-cli.git",
