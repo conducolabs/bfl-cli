@@ -56,7 +56,7 @@ const initCommand = (program) => {
             fs_1.default.writeFileSync(path_1.default.resolve(`${options.output}/data/${convertToValidFilename(options.triggerWord).toLowerCase()}-1.txt`), "An illustration of an astronaut on white background. The astronaut is wearing a helmet and a space suite. The space suite is colored in white, green and blue. He is holding a laptop in one of his hands.");
             fs_1.default.copyFileSync(path_1.default.resolve(__dirname, "../../sampleData/sample1.jpeg"), path_1.default.resolve(`${options.output}/data/${convertToValidFilename(options.triggerWord).toLowerCase()}-1.jpeg`));
             console.log(chalk_1.default.green("✓"), `Example files created. Please replace the example files with your training data here: ${path_1.default.resolve(options.output)}/data`);
-            console.log(chalk_1.default.green("✓"), "Initialization complete. Add your training data and run the following command to train your model:", chalk_1.default.green(`npx @conducolabs/bfl-cli --apiKey 'INSERT YOUR API KEY' --name "${options.triggerWord}" --trainingData "${path_1.default.resolve(options.output)}/data" --configurationFile "${path_1.default.resolve(options.output)}/config.json"`));
+            console.log(chalk_1.default.green("✓"), "Initialization complete. Add your training data and run the following command to train your model:", chalk_1.default.green(`npx @conducolabs/bfl-cli generate-finetune --apiKey "INSERT YOUR API KEY" --name "${options.triggerWord}" --trainingData "${path_1.default.resolve(options.output)}/data" --configurationFile "${path_1.default.resolve(options.output)}/config.json"`));
             process.exit(0);
         }
         catch (error) {

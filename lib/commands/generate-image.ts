@@ -18,6 +18,7 @@ const initCommand = (program: Command) => {
         .option("-f, --finetuneId <string>", "Finetune ID for the image generation (optional)")
         .option("-t --tool <string>", "Tool to be used for the image generation  (optional)")
         .option("--mask <string>", "Path to a mask for the image generation (to be used with the fill tool)")
+        .option("--image <string>", "Path to an image for the image generation (to be used with the fill tool)")
         .option("--controlImage <string>", "Path to an control image for the image generation (to be used with the canny or depth tool)")
         .option("--preprocessedImage <string>", "Path to an preprocessed image for the image generation (to be used with the canny or depth tool)")
         .action(async (options) => {
@@ -149,6 +150,7 @@ const initCommand = (program: Command) => {
                             const fluxPro1Finetuned = new FluxPro1Finetuned(bflApi);
                             if (mode === "fill") {
                                 let maskImagePath = "";
+                                let preImagePath = "";
                                 if (!options.controlImage) {
                                     const input = await inquirer.prompt([{
                                         type: "input",
@@ -161,10 +163,24 @@ const initCommand = (program: Command) => {
                                     console.log(chalk.red("⨯ Control image does not exist."));
                                     return;
                                 }
+                                if (!options.image) {
+                                    const input = await inquirer.prompt([{
+                                        type: "input",
+                                        name: "image",
+                                        message: "Please provide the path to a base image:"
+                                    }]);
+                                    preImagePath = input.image;
+                                }
+                                if (!fs.existsSync(path.resolve(preImagePath))) {
+                                    console.log(chalk.red("⨯ Image does not exist."));
+                                    return;
+                                }
                                 const maskImage = loadImageToBase64(path.resolve(maskImagePath));
+                                const preImage = loadImageToBase64(path.resolve(preImagePath));
                                 const image = await fluxPro1Finetuned.generateImageWithMask(options.prompt, options.finetuneId, {
                                     ...configuration,
-                                    mask: maskImage
+                                    mask: maskImage,
+                                    image: preImage
                                 });
                                 console.log(chalk.green("✓"), "Image generation in progress...");
                                 const statusBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
@@ -227,6 +243,7 @@ const initCommand = (program: Command) => {
                             const fluxPro1 = new FluxPro1(bflApi);
                             if (mode === "fill") {
                                 let maskImagePath = "";
+                                let preImagePath= "";
                                 if (!options.controlImage) {
                                     const input = await inquirer.prompt([{
                                         type: "input",
@@ -239,10 +256,24 @@ const initCommand = (program: Command) => {
                                     console.log(chalk.red("⨯ Control image does not exist."));
                                     return;
                                 }
+                                if (!options.image) {
+                                    const input = await inquirer.prompt([{
+                                        type: "input",
+                                        name: "image",
+                                        message: "Please provide the path to a base image:"
+                                    }]);
+                                    preImagePath = input.image;
+                                }
+                                if (!fs.existsSync(path.resolve(preImagePath))) {
+                                    console.log(chalk.red("⨯ Image does not exist."));
+                                    return;
+                                }
                                 const maskImage = loadImageToBase64(path.resolve(maskImagePath));
+                                const preImage = loadImageToBase64(path.resolve(preImagePath));
                                 const image = await fluxPro1.generateImageWithMask(options.prompt, {
                                     ...configuration,
-                                    mask: maskImage
+                                    mask: maskImage,
+                                    image: preImage
                                 });
                                 console.log(chalk.green("✓"), "Image generation in progress...");
                                 const statusBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
