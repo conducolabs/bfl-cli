@@ -28,7 +28,11 @@ npx @conducolabs/bfl-cli generate-finetune --help
 ```
 
 ## Available models & tools
-
+| Model          | Tools                                                                                                                                                     | Finetuning available? |
+|----------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|
+| `flux-dev`     | -                                                                                                                                                         | ❌                     |
+| `flux-pro`     | <ul><li>default (No tools applied)</li> <li>fill (Using a binary mask)</li> <li>canny (Using a canny mask)</li> <li>depth (Using a depth mask)</li> </ul> | ✅ (For all tools)     |
+| `flux-pro 1.1` | <ul><li>default (No tools applied)</li><li> ultra</li></ul>                                                                                               | ✅ (For all tools)     |
 
 ## Advanced
 The examples show a basic usage of the CLI. There are optional parameters, that can be passed to the functions. If you want to use your own configuration for image generation, please provide your configuration as a JSON file through the `--configurationFile` attribute. Allowed values vary from model to model. A full list of all available values can be found in the [API description](https://api.us1.bfl.ai/scalar) of Black Forest Labs.
