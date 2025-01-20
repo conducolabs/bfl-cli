@@ -20,7 +20,7 @@
     "build": "tsc"
   },
   "bin": {
-    "bfl-cli": "./index.js"
+    "@conducolabs/bfl-cli": "./dist/index.js"
   },
   "devDependencies": {
     "@types/archiver": "^6.0.3",

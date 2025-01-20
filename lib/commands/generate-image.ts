@@ -7,7 +7,6 @@ import Connector, { FluxDev1, FluxPro1, FluxPro11, FluxPro11Finetuned, FluxPro1F
 import cliProgress from "cli-progress";
 import axios from "axios";
 
-
 const initCommand = (program: Command) => {
     program
         .command("generate-image")

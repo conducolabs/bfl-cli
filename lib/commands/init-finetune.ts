@@ -46,7 +46,7 @@ const initCommand = (program: Command) => {
                 fs.writeFileSync(path.resolve(`${ options.output }/data/${ convertToValidFilename(options.triggerWord).toLowerCase() }-1.txt`), "An illustration of an astronaut on white background. The astronaut is wearing a helmet and a space suite. The space suite is colored in white, green and blue. He is holding a laptop in one of his hands.");
                 fs.copyFileSync(path.resolve(__dirname, "../../sampleData/sample1.jpeg"), path.resolve(`${ options.output }/data/${ convertToValidFilename(options.triggerWord).toLowerCase() }-1.jpeg`));
                 console.log(chalk.green("✓"), `Example files created. Please replace the example files with your training data here: ${ path.resolve(options.output) }/data`);
-                console.log(chalk.green("✓"), "Initialization complete. Add your training data and run the following command to train your model:", chalk.green(`npx @conducolabs/bfl-cli --apiKey 'INSERT YOUR API KEY' --name "${ options.triggerWord }" --trainingData "${ path.resolve(options.output) }/data" --configurationFile "${ path.resolve(options.output) }/config.json"`));
+                console.log(chalk.green("✓"), "Initialization complete. Add your training data and run the following command to train your model:", chalk.green(`npx @conducolabs/bfl-cli generate-finetune --apiKey "INSERT YOUR API KEY" --name "${ options.triggerWord }" --trainingData "${ path.resolve(options.output) }/data" --configurationFile "${ path.resolve(options.output) }/config.json"`));
                 process.exit(0);
             } catch(error:any) {
                 console.log(chalk.red("⨯ An error occurred while initializing the finetuning model.", error.message));
