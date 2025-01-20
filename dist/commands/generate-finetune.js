@@ -1,37 +1,4 @@
 "use strict";
-var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    var desc = Object.getOwnPropertyDescriptor(m, k);
-    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
-      desc = { enumerable: true, get: function() { return m[k]; } };
-    }
-    Object.defineProperty(o, k2, desc);
-}) : (function(o, m, k, k2) {
-    if (k2 === undefined) k2 = k;
-    o[k2] = m[k];
-}));
-var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
-    Object.defineProperty(o, "default", { enumerable: true, value: v });
-}) : function(o, v) {
-    o["default"] = v;
-});
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -52,7 +19,7 @@ const archiver_1 = __importDefault(require("archiver"));
 const stream_buffers_1 = __importDefault(require("stream-buffers"));
 const axios_1 = __importDefault(require("axios"));
 const cli_progress_1 = __importDefault(require("cli-progress"));
-const bfl_js_1 = __importStar(require("@conducolabs/bfl-js"));
+const bfl_js_1 = __importDefault(require("@conducolabs/bfl-js"));
 const initCommand = (program) => {
     program
         .command("generate-finetune")
@@ -109,8 +76,9 @@ const initCommand = (program) => {
             console.log(chalk_1.default.green("✓"), "Uploading training data...");
             const finetuneId = yield uploadData(options.apiKey, options.name, trainingDataArchive, configuration);
             console.log(chalk_1.default.green("✓"), "Training data uploaded. Finetuning model ID:", finetuneId);
-            let trainingSpinner = loadingAnimation(() => `Wating for training to complete. This can take some time depending on the number of iterations and amount of training data. You can wait for the training to finish or cancel the process with CTRL+C.`);
-            yield checkTrainingStatus(options.apiKey, finetuneId, trainingSpinner);
+            const progressBar = new cli_progress_1.default.SingleBar({}, cli_progress_1.default.Presets.shades_classic);
+            progressBar.start(100, 0);
+            yield checkTrainingStatus(options.apiKey, finetuneId, progressBar);
             return;
         }
         catch (error) {
@@ -168,20 +136,34 @@ const uploadData = (apiKey, name, trainingData, configuration) => __awaiter(void
     });
     return request.data.finetune_id;
 });
-const checkTrainingStatus = (apiKey, id, spinner) => __awaiter(void 0, void 0, void 0, function* () {
+const checkTrainingStatus = (apiKey, id, progress) => __awaiter(void 0, void 0, void 0, function* () {
     const apiConnector = new bfl_js_1.default({ apiKey: apiKey });
-    const finetuningApi = new bfl_js_1.Finetune(apiConnector);
     try {
-        const status = yield finetuningApi.getDetails(id);
-        clearInterval(spinner);
-        console.log("\n");
-        console.log(chalk_1.default.green("✓"), "Finetuning model is ready. Finetune model ID:", id);
-        process.exit(0);
+        const status = yield apiConnector.getStatus(id);
+        if (status.status === "Ready") {
+            progress.update(100);
+            progress.stop();
+            console.log(chalk_1.default.green("✓"), "Finetuning model is ready. Finetune model ID:", id);
+            process.exit(0);
+        }
+        else if (status.status === "Pending") {
+            progress.update(status.progress * 100);
+            setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
+                yield checkTrainingStatus(apiKey, id, progress);
+            }), 10000);
+        }
+        else {
+            progress.update(100);
+            progress.stop();
+            console.log(chalk_1.default.red("⨯"), "An error occurred while training the model:", status.status);
+            process.exit(0);
+        }
     }
     catch (error) {
-        setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
-            const status = yield checkTrainingStatus(apiKey, id, spinner);
-        }), 10000);
+        progress.update(100);
+        progress.stop();
+        console.log(chalk_1.default.red("⨯"), "An error occurred while training the model:", error.message);
+        process.exit(0);
     }
 });
 const loadingAnimation = (getText, chars = ["⠙", "⠘", "⠰", "⠴", "⠤", "⠦", "⠆", "⠃", "⠋", "⠉"], delay = 100) => {

@@ -65,8 +65,9 @@ const initCommand = (program: Command) => {
                 console.log(chalk.green("✓"), "Uploading training data...");
                 const finetuneId = await uploadData(options.apiKey, options.name, trainingDataArchive, configuration);
                 console.log(chalk.green("✓"), "Training data uploaded. Finetuning model ID:", finetuneId);
-                let trainingSpinner = loadingAnimation(() => `Wating for training to complete. This can take some time depending on the number of iterations and amount of training data. You can wait for the training to finish or cancel the process with CTRL+C.`);
-                await checkTrainingStatus(options.apiKey, finetuneId, trainingSpinner);
+                const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+                progressBar.start(100, 0);
+                await checkTrainingStatus(options.apiKey, finetuneId, progressBar);
                 return;
             } catch(error:any) {
                 console.log(chalk.red("⨯ An error occurred while generating the finetuning model.", error.message));
@@ -133,19 +134,31 @@ const uploadData = async (apiKey: string, name: string, trainingData: string, co
     return request.data.finetune_id;
 };
 
-const checkTrainingStatus = async (apiKey:string, id:string, spinner:any) => {
-    const apiConnector = new Connector({ apiKey: apiKey });
-    const finetuningApi = new Finetune(apiConnector);
+const checkTrainingStatus = async (apiKey:string, id:string, progress:any) => {
+    const apiConnector = new Connector({ apiKey: apiKey })
     try {
-        const status = await finetuningApi.getDetails(id);
-        clearInterval(spinner);
-        console.log("\n");
-        console.log(chalk.green("✓"), "Finetuning model is ready. Finetune model ID:", id);
+        const status = await apiConnector.getStatus(id);
+        if (status.status === "Ready") {
+            progress.update(100);
+            progress.stop();
+            console.log(chalk.green("✓"), "Finetuning model is ready. Finetune model ID:", id);
+            process.exit(0);
+        } else if (status.status === "Pending") {
+            progress.update(status.progress * 100);
+            setTimeout(async () => { 
+                await checkTrainingStatus(apiKey, id, progress);
+            }, 10000);
+        } else {
+            progress.update(100);
+            progress.stop();
+            console.log(chalk.red("⨯"), "An error occurred while training the model:", status.status);
+            process.exit(0);
+        }
+    } catch(error:any) {
+        progress.update(100);
+        progress.stop();
+        console.log(chalk.red("⨯"), "An error occurred while training the model:", error.message);
         process.exit(0);
-    } catch(error) {
-        setTimeout(async () => {
-            const status = await checkTrainingStatus(apiKey, id, spinner);
-        }, 10000);
     }
 };
 
