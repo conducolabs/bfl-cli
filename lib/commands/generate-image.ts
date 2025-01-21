@@ -3,7 +3,7 @@ import { Command } from "commander";
 import inquirer from "inquirer";
 import fs from "fs";
 import path from "path";
-import Connector, { FluxDev1, FluxPro1, FluxPro11, FluxPro11Finetuned, FluxPro1Finetuned } from "@conducolabs/bfl-js";
+import Connector, { Finetune, FluxDev1, FluxPro1, FluxPro11, FluxPro11Finetuned, FluxPro1Finetuned } from "@conducolabs/bfl-js";
 import cliProgress from "cli-progress";
 import axios from "axios";
 
@@ -15,7 +15,7 @@ const initCommand = (program: Command) => {
         .option("-m, --model <string>", "Model to use for the image generation")
         .option("-o, --output <string>", "Output location for the image")
         .option("-c, --configurationFile <string>", "Configuration file for the image generation (optional)")
-        .option("-f, --finetuneId <string>", "Finetune ID for the image generation (optional)")
+        .option("-f, --finetune <string>", "Finetune ID for the image generation (optional). Insert 'select' to select an existing finetune model.")
         .option("-t --tool <string>", "Tool to be used for the image generation  (optional)")
         .option("--mask <string>", "Path to a mask for the image generation (to be used with the fill tool)")
         .option("--image <string>", "Path to an image for the image generation (to be used with the fill tool)")
@@ -38,7 +38,7 @@ const initCommand = (program: Command) => {
 
             let model = "";
             let mode = "none"
-            const useFinetune = options.finetuneId ? true : false;
+            const useFinetune = options.finetune ? true : false;
 
             let configuration = {};
 
@@ -148,6 +148,12 @@ const initCommand = (program: Command) => {
                     try {
                         if (useFinetune) {
                             const fluxPro1Finetuned = new FluxPro1Finetuned(bflApi);
+
+                            let finetuneId = options.finetune;
+                            if (finetuneId === "select") {
+                                finetuneId = await selectExistingFinetuneModel(bflApi);
+                            }
+
                             if (mode === "fill") {
                                 let maskImagePath = "";
                                 let preImagePath = "";
@@ -177,7 +183,7 @@ const initCommand = (program: Command) => {
                                 }
                                 const maskImage = loadImageToBase64(path.resolve(maskImagePath));
                                 const preImage = loadImageToBase64(path.resolve(preImagePath));
-                                const image = await fluxPro1Finetuned.generateImageWithMask(options.prompt, options.finetuneId, {
+                                const image = await fluxPro1Finetuned.generateImageWithMask(options.prompt, finetuneId, {
                                     ...configuration,
                                     mask: maskImage,
                                     image: preImage
@@ -201,7 +207,7 @@ const initCommand = (program: Command) => {
                                     return;
                                 }
                                 const controlImage = loadImageToBase64(path.resolve(controlImagePath));
-                                const image = await fluxPro1Finetuned.generateCannyImageWithControlImage(options.prompt, options.finetuneId, {
+                                const image = await fluxPro1Finetuned.generateCannyImageWithControlImage(options.prompt, finetuneId, {
                                     ...configuration,
                                     control_image: controlImage
                                 });
@@ -224,7 +230,7 @@ const initCommand = (program: Command) => {
                                     return;
                                 }
                                 const controlImage = loadImageToBase64(path.resolve(controlImagePath));
-                                const image = await fluxPro1Finetuned.generateDepthImageWithControlImage(options.prompt, options.finetuneId, {
+                                const image = await fluxPro1Finetuned.generateDepthImageWithControlImage(options.prompt, finetuneId, {
                                     ...configuration,
                                     control_image: controlImage
                                 });
@@ -233,7 +239,7 @@ const initCommand = (program: Command) => {
                                 statusBar.start(100, 0);
                                 await fetchImageDetails(bflApi, image.id, statusBar, downloadImage, options.output);
                             } else {
-                                const image = await fluxPro1Finetuned.generateImage(options.prompt, options.finetuneId, configuration);
+                                const image = await fluxPro1Finetuned.generateImage(options.prompt, finetuneId, configuration);
                                 console.log(chalk.green("✓"), "Image generation in progress...");
                                 const statusBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
                                 statusBar.start(100, 0);
@@ -396,14 +402,20 @@ const initCommand = (program: Command) => {
                     try {
                         if (useFinetune) {
                             const fluxPro11Finetuned = new FluxPro11Finetuned(bflApi);
+
+                            let finetuneId = options.finetune;
+                            if (finetuneId === "select") {
+                                finetuneId = await selectExistingFinetuneModel(bflApi);
+                            }
+
                             if (mode === "ultra") {
-                                const image = await fluxPro11Finetuned.generateUltraImage(options.prompt, options.finetuneId, configuration);
+                                const image = await fluxPro11Finetuned.generateUltraImage(options.prompt, finetuneId, configuration);
                                 console.log(chalk.green("✓"), "Image generation in progress...");
                                 const statusBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
                                 statusBar.start(100, 0);
                                 await fetchImageDetails(bflApi, image.id, statusBar, downloadImage, options.output);
                             } else {
-                                const image = await fluxPro11Finetuned.generateImage(options.prompt, options.finetuneId, configuration);
+                                const image = await fluxPro11Finetuned.generateImage(options.prompt, finetuneId, configuration);
                                 console.log(chalk.green("✓"), "Image generation in progress...");
                                 const statusBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
                                 statusBar.start(100, 0);
@@ -479,5 +491,42 @@ const downloadImage = async (id: string, url: string, location: string) => {
 const loadImageToBase64 = (path: string) => {
     return fs.readFileSync(path, { encoding: "base64" });
 };
+
+const selectExistingFinetuneModel = async (bflApi: Connector) => {
+    const finetuningApi = new Finetune(bflApi);
+    const finetuningIds = await finetuningApi.getList();
+
+    const finetunes = [];
+
+    for (const finetune of finetuningIds.finetunes) {
+        const details = await finetuningApi.getDetails(finetune);
+        finetunes.push({
+            id: finetune,
+            name: details.finetune_details.trigger_word,
+            createdAt: details.finetune_details.timestamp
+        });
+    }
+    const list = finetunes.sort((a:any, b:any) => {
+        if (a.createdAt < b.createdAt) {
+            return -1;
+          }
+          if (a.createdAt > b.createdAt) {
+            return 1;
+          }
+          return 0;
+    }).map((finetune) => {
+        return {
+            name: `${ finetune.name } (v${ finetune.createdAt })`,
+            value: finetune.id
+        };
+    });
+    const input = await inquirer.prompt([{
+        type: "list",
+        name: "finetuneId",
+        message: "Select a model for finetuning:",
+        choices: list
+    }]);
+    return input.finetuneId;
+}
 
 export default initCommand;

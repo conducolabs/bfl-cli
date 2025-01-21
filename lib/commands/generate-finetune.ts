@@ -160,6 +160,6 @@ const loadingAnimation = (getText:any, chars = ["⠙", "⠘", "⠰", "⠴", "⠤
         process.stdout.write("\r" + chars[x++] + " " + getText());
         x = x % chars.length;
     }, delay);
-}
+};
 
 export default initCommand;

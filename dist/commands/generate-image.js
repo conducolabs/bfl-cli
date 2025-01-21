@@ -60,7 +60,7 @@ const initCommand = (program) => {
         .option("-m, --model <string>", "Model to use for the image generation")
         .option("-o, --output <string>", "Output location for the image")
         .option("-c, --configurationFile <string>", "Configuration file for the image generation (optional)")
-        .option("-f, --finetuneId <string>", "Finetune ID for the image generation (optional)")
+        .option("-f, --finetune <string>", "Finetune ID for the image generation (optional). Insert 'select' to select an existing finetune model.")
         .option("-t --tool <string>", "Tool to be used for the image generation  (optional)")
         .option("--mask <string>", "Path to a mask for the image generation (to be used with the fill tool)")
         .option("--image <string>", "Path to an image for the image generation (to be used with the fill tool)")
@@ -80,7 +80,7 @@ const initCommand = (program) => {
         const fluxPro11Modes = ["none", "ultra"];
         let model = "";
         let mode = "none";
-        const useFinetune = options.finetuneId ? true : false;
+        const useFinetune = options.finetune ? true : false;
         let configuration = {};
         if (!options.model || !models.includes(options.model)) {
             try {
@@ -194,6 +194,10 @@ const initCommand = (program) => {
                 try {
                     if (useFinetune) {
                         const fluxPro1Finetuned = new bfl_js_1.FluxPro1Finetuned(bflApi);
+                        let finetuneId = options.finetune;
+                        if (finetuneId === "select") {
+                            finetuneId = yield selectExistingFinetuneModel(bflApi);
+                        }
                         if (mode === "fill") {
                             let maskImagePath = "";
                             let preImagePath = "";
@@ -223,7 +227,7 @@ const initCommand = (program) => {
                             }
                             const maskImage = loadImageToBase64(path_1.default.resolve(maskImagePath));
                             const preImage = loadImageToBase64(path_1.default.resolve(preImagePath));
-                            const image = yield fluxPro1Finetuned.generateImageWithMask(options.prompt, options.finetuneId, Object.assign(Object.assign({}, configuration), { mask: maskImage, image: preImage }));
+                            const image = yield fluxPro1Finetuned.generateImageWithMask(options.prompt, finetuneId, Object.assign(Object.assign({}, configuration), { mask: maskImage, image: preImage }));
                             console.log(chalk_1.default.green("✓"), "Image generation in progress...");
                             const statusBar = new cli_progress_1.default.SingleBar({}, cli_progress_1.default.Presets.shades_classic);
                             statusBar.start(100, 0);
@@ -244,7 +248,7 @@ const initCommand = (program) => {
                                 return;
                             }
                             const controlImage = loadImageToBase64(path_1.default.resolve(controlImagePath));
-                            const image = yield fluxPro1Finetuned.generateCannyImageWithControlImage(options.prompt, options.finetuneId, Object.assign(Object.assign({}, configuration), { control_image: controlImage }));
+                            const image = yield fluxPro1Finetuned.generateCannyImageWithControlImage(options.prompt, finetuneId, Object.assign(Object.assign({}, configuration), { control_image: controlImage }));
                             console.log(chalk_1.default.green("✓"), "Image generation in progress...");
                             const statusBar = new cli_progress_1.default.SingleBar({}, cli_progress_1.default.Presets.shades_classic);
                             statusBar.start(100, 0);
@@ -265,14 +269,14 @@ const initCommand = (program) => {
                                 return;
                             }
                             const controlImage = loadImageToBase64(path_1.default.resolve(controlImagePath));
-                            const image = yield fluxPro1Finetuned.generateDepthImageWithControlImage(options.prompt, options.finetuneId, Object.assign(Object.assign({}, configuration), { control_image: controlImage }));
+                            const image = yield fluxPro1Finetuned.generateDepthImageWithControlImage(options.prompt, finetuneId, Object.assign(Object.assign({}, configuration), { control_image: controlImage }));
                             console.log(chalk_1.default.green("✓"), "Image generation in progress...");
                             const statusBar = new cli_progress_1.default.SingleBar({}, cli_progress_1.default.Presets.shades_classic);
                             statusBar.start(100, 0);
                             yield fetchImageDetails(bflApi, image.id, statusBar, downloadImage, options.output);
                         }
                         else {
-                            const image = yield fluxPro1Finetuned.generateImage(options.prompt, options.finetuneId, configuration);
+                            const image = yield fluxPro1Finetuned.generateImage(options.prompt, finetuneId, configuration);
                             console.log(chalk_1.default.green("✓"), "Image generation in progress...");
                             const statusBar = new cli_progress_1.default.SingleBar({}, cli_progress_1.default.Presets.shades_classic);
                             statusBar.start(100, 0);
@@ -422,15 +426,19 @@ const initCommand = (program) => {
                 try {
                     if (useFinetune) {
                         const fluxPro11Finetuned = new bfl_js_1.FluxPro11Finetuned(bflApi);
+                        let finetuneId = options.finetune;
+                        if (finetuneId === "select") {
+                            finetuneId = yield selectExistingFinetuneModel(bflApi);
+                        }
                         if (mode === "ultra") {
-                            const image = yield fluxPro11Finetuned.generateUltraImage(options.prompt, options.finetuneId, configuration);
+                            const image = yield fluxPro11Finetuned.generateUltraImage(options.prompt, finetuneId, configuration);
                             console.log(chalk_1.default.green("✓"), "Image generation in progress...");
                             const statusBar = new cli_progress_1.default.SingleBar({}, cli_progress_1.default.Presets.shades_classic);
                             statusBar.start(100, 0);
                             yield fetchImageDetails(bflApi, image.id, statusBar, downloadImage, options.output);
                         }
                         else {
-                            const image = yield fluxPro11Finetuned.generateImage(options.prompt, options.finetuneId, configuration);
+                            const image = yield fluxPro11Finetuned.generateImage(options.prompt, finetuneId, configuration);
                             console.log(chalk_1.default.green("✓"), "Image generation in progress...");
                             const statusBar = new cli_progress_1.default.SingleBar({}, cli_progress_1.default.Presets.shades_classic);
                             statusBar.start(100, 0);
@@ -508,4 +516,38 @@ const downloadImage = (id, url, location) => __awaiter(void 0, void 0, void 0, f
 const loadImageToBase64 = (path) => {
     return fs_1.default.readFileSync(path, { encoding: "base64" });
 };
+const selectExistingFinetuneModel = (bflApi) => __awaiter(void 0, void 0, void 0, function* () {
+    const finetuningApi = new bfl_js_1.Finetune(bflApi);
+    const finetuningIds = yield finetuningApi.getList();
+    const finetunes = [];
+    for (const finetune of finetuningIds.finetunes) {
+        const details = yield finetuningApi.getDetails(finetune);
+        finetunes.push({
+            id: finetune,
+            name: details.finetune_details.trigger_word,
+            createdAt: details.finetune_details.timestamp
+        });
+    }
+    const list = finetunes.sort((a, b) => {
+        if (a.createdAt < b.createdAt) {
+            return -1;
+        }
+        if (a.createdAt > b.createdAt) {
+            return 1;
+        }
+        return 0;
+    }).map((finetune) => {
+        return {
+            name: `${finetune.name} (v${finetune.createdAt})`,
+            value: finetune.id
+        };
+    });
+    const input = yield inquirer_1.default.prompt([{
+            type: "list",
+            name: "finetuneId",
+            message: "Select a model for finetuning:",
+            choices: list
+        }]);
+    return input.finetuneId;
+});
 exports.default = initCommand;
