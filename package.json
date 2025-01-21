@@ -1,13 +1,13 @@
 {
   "name": "@conducolabs/bfl-cli",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A command line tool to interact with the Black Forest Labs API.",
   "main": "dist/index.js",
   "repository": "https://github.com/conducolabs/bfl-cli.git",
   "author": "Johannes Terhürne <johannes@condu.co>",
   "license": "MIT",
   "dependencies": {
-    "@conducolabs/bfl-js": "^1.0.3",
+    "@conducolabs/bfl-js": "^1.0.4",
     "archiver": "^7.0.1",
     "axios": "^1.7.9",
     "chalk": "4.1.2",

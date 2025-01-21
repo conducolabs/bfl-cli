@@ -110,28 +110,19 @@ const uploadData = async (apiKey: string, name: string, trainingData: string, co
     const statusBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
     statusBar.start(100, 0);
 
-    const request = await axios.post(`https://api.us1.bfl.ai/v1/finetune`, {
-        ...defaultConfiguration,
-        ...configuration,
-        file_data: trainingData,
-        finetune_comment: name
-    }, {
-        headers: {
-            "X-Key": apiKey,
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        },
-        onUploadProgress: (progressEvent: any) => {
-            let percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            if (percentCompleted === 100) {
-                statusBar.update(100);
-                statusBar.stop();
-            } else {
-                statusBar.update(percentCompleted);
-            }
+    const apiClient = new Connector({ apiKey: apiKey });
+    const finetuningClient = new Finetune(apiClient);
+
+    const request = await finetuningClient.create(trainingData, name, configuration, ((progress) => {}), ((status) => {
+        const percentCompleted = Math.round((status.percentage * 100));
+        if (percentCompleted === 100) {
+            statusBar.update(100);
+            statusBar.stop();
+        } else {
+            statusBar.update(percentCompleted);
         }
-    });
-    return request.data.finetune_id;
+    }));
+    return request.finetune_id;
 };
 
 const checkTrainingStatus = async (apiKey:string, id:string, progress:any) => {

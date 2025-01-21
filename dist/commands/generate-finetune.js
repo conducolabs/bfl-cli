@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -17,9 +50,8 @@ const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const archiver_1 = __importDefault(require("archiver"));
 const stream_buffers_1 = __importDefault(require("stream-buffers"));
-const axios_1 = __importDefault(require("axios"));
 const cli_progress_1 = __importDefault(require("cli-progress"));
-const bfl_js_1 = __importDefault(require("@conducolabs/bfl-js"));
+const bfl_js_1 = __importStar(require("@conducolabs/bfl-js"));
 const initCommand = (program) => {
     program
         .command("generate-finetune")
@@ -117,24 +149,19 @@ const uploadData = (apiKey, name, trainingData, configuration) => __awaiter(void
     };
     const statusBar = new cli_progress_1.default.SingleBar({}, cli_progress_1.default.Presets.shades_classic);
     statusBar.start(100, 0);
-    const request = yield axios_1.default.post(`https://api.us1.bfl.ai/v1/finetune`, Object.assign(Object.assign(Object.assign({}, defaultConfiguration), configuration), { file_data: trainingData, finetune_comment: name }), {
-        headers: {
-            "X-Key": apiKey,
-            "Accept": "application/json",
-            "Content-Type": "application/json"
-        },
-        onUploadProgress: (progressEvent) => {
-            let percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            if (percentCompleted === 100) {
-                statusBar.update(100);
-                statusBar.stop();
-            }
-            else {
-                statusBar.update(percentCompleted);
-            }
+    const apiClient = new bfl_js_1.default({ apiKey: apiKey });
+    const finetuningClient = new bfl_js_1.Finetune(apiClient);
+    const request = yield finetuningClient.create(trainingData, name, configuration, ((progress) => { }), ((status) => {
+        const percentCompleted = Math.round((status.percentage * 100));
+        if (percentCompleted === 100) {
+            statusBar.update(100);
+            statusBar.stop();
         }
-    });
-    return request.data.finetune_id;
+        else {
+            statusBar.update(percentCompleted);
+        }
+    }));
+    return request.finetune_id;
 });
 const checkTrainingStatus = (apiKey, id, progress) => __awaiter(void 0, void 0, void 0, function* () {
     const apiConnector = new bfl_js_1.default({ apiKey: apiKey });
